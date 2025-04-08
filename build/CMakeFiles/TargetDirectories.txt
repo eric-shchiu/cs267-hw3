@@ -1,0 +1,4 @@
+/global/homes/y/yan_wu/cs267-hw3/build/CMakeFiles/kmer_hash_19.dir
+/global/homes/y/yan_wu/cs267-hw3/build/CMakeFiles/kmer_hash_51.dir
+/global/homes/y/yan_wu/cs267-hw3/build/CMakeFiles/edit_cache.dir
+/global/homes/y/yan_wu/cs267-hw3/build/CMakeFiles/rebuild_cache.dir
