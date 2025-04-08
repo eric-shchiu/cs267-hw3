@@ -15,7 +15,10 @@ struct HashMap {
     int rank_n;
     int rank_me;
 
-    HashMap(size_t total_size_);
+    HashMap() = default;
+    void init(size_t total_size_);
+
+    // HashMap(size_t total_size_);
 
     // Hash function to decide owner
     int get_owner(const pkmer_t& key_kmer);
@@ -40,19 +43,18 @@ struct HashMap {
     uint64_t global_index_to_owner(uint64_t slot);
 };
 
-HashMap::HashMap(size_t total_size_) {
+void HashMap::init(size_t total_size_) {
     total_size = total_size_;
     rank_n = upcxx::rank_n();
     rank_me = upcxx::rank_me();
 
-    my_size = (total_size + rank_n - 1) / rank_n;
-    data = upcxx::new_array<kmer_pair>(my_size);
-    used = upcxx::new_array<int>(my_size);
-    upcxx::barrier();
+    my_size = (total_size + rank_n - 1) / rank_n;       // Round up (the type of my_size is size_t)
+    data = upcxx::new_array<kmer_pair>(my_size);        // shared memory
+    used = upcxx::new_array<int>(my_size);              // shared memory
 }
 
 int HashMap::get_owner(const pkmer_t& key_kmer) {
-    return key_kmer.hash() % rank_n;
+    return key_kmer.hash() % rank_n;                    // assign kmer to different processor according to hash value (uniform distribution)
 }
 
 bool HashMap::insert(const kmer_pair& kmer) {
@@ -61,7 +63,7 @@ bool HashMap::insert(const kmer_pair& kmer) {
         return insert_local(kmer);
     } else {
         return upcxx::rpc(owner, [](kmer_pair kmer_remote, upcxx::global_ptr<kmer_pair> d, upcxx::global_ptr<int> u, size_t size) {
-            HashMap local_map(size);
+            HashMap local_map;
             local_map.data = d;
             local_map.used = u;
             local_map.my_size = size;
@@ -76,7 +78,7 @@ bool HashMap::find(const pkmer_t& key_kmer, kmer_pair& val_kmer) {
         return find_local(key_kmer, val_kmer);
     } else {
         auto result_pair = upcxx::rpc(owner, [](pkmer_t key, upcxx::global_ptr<kmer_pair> d, upcxx::global_ptr<int> u, size_t size) {
-            HashMap local_map(size);
+            HashMap local_map;
             local_map.data = d;
             local_map.used = u;
             local_map.my_size = size;
@@ -89,7 +91,6 @@ bool HashMap::find(const pkmer_t& key_kmer, kmer_pair& val_kmer) {
         return result_pair.first;
     }
 }
-
 
 bool HashMap::insert_local(const kmer_pair& kmer) {
     uint64_t hash = kmer.hash();
