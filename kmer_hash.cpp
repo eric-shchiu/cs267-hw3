@@ -17,13 +17,6 @@
 int main(int argc, char** argv) {
     upcxx::init();
 
-    // TODO: Dear Students,
-    // Please remove this if statement, when you start writing your parallel implementation.
-    if (upcxx::rank_n() > 1) {
-        throw std::runtime_error("Error: parallel implementation not started yet!"
-                                 " (remove this when you start working.)");
-    }
-
     if (argc < 2) {
         BUtil::print("usage: srun -N nodes -n ranks ./kmer_hash kmer_file [verbose|test [prefix]]\n");
         upcxx::finalize();
